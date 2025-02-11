@@ -1,6 +1,12 @@
 class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
+        this.maxPoops = 6; // Max 6 shots in Level 1
+        this.poopsUsed = 0;
+        this.currentEnemies = 0;
+        this.maxEnemies = 5; // 5 enemies in Level 1
+        this.enemiesDefeated = 0;
+        this.missedEnemies = 0;
     }
 
     preload() {
@@ -12,21 +18,21 @@ class MainScene extends Phaser.Scene {
     }
 
     create() {
-        this.updateCanvasSize();
+        // Add background
+        this.add.image(400, 300, 'background');
 
-        // Add background and make it fullscreen
-        this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background')
-            .setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+        // Add slingshot
+        this.slingshot = this.add.image(150, 450, 'slingshot').setDepth(1);
 
-        // Add slingshot and align properly
-        this.slingshot = this.add.image(150, this.cameras.main.height - 150, 'slingshot').setDepth(1);
-
+        // Create poop group
         this.poop = null;
         this.spawnPoop();
 
+        // Create enemies array
         this.enemies = [];
-        this.spawnEnemy();
+        this.spawnEnemy(); // First enemy
 
+        // Collision event listener
         this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
             let poop = bodyA.gameObject || bodyB.gameObject;
             let enemy = bodyA.gameObject && bodyA.gameObject.texture.key === 'baby' ? bodyA.gameObject :
@@ -40,51 +46,103 @@ class MainScene extends Phaser.Scene {
                     onComplete: () => {
                         poop.destroy();
                         enemy.destroy();
+                        this.enemiesDefeated++;
+                        this.spawnPoop();
+                        this.spawnEnemy();
                     }
                 });
             }
         });
-
-        window.addEventListener('resize', () => this.updateCanvasSize());
-    }
-
-    updateCanvasSize() {
-        this.scale.resize(window.innerWidth, window.innerHeight);
     }
 
     spawnPoop() {
-        this.poop = this.matter.add.image(150, this.cameras.main.height - 150, 'poop');
-        this.poop.setCircle(20);
-        this.poop.setStatic(true);
+        if (this.poopsUsed >= this.maxPoops) return; // No more shots if limit reached
 
+        this.poopsUsed++;
+        this.poop = this.matter.add.image(150, 450, 'poop');
+        this.poop.setCircle(20);
+        this.poop.setStatic(true); // Stay in place until tapped
+
+        // On tap, launch the poop
         this.poop.setInteractive();
         this.poop.once('pointerdown', () => this.launchPoop());
     }
 
     launchPoop() {
         this.poop.setStatic(false);
-        this.poop.setVelocity(10, -10);
+        this.poop.setVelocity(10, -10); // Launch it
+
+        // After 1.5 sec, spawn new poop
+        this.time.delayedCall(1500, () => this.spawnPoop(), [], this);
     }
 
     spawnEnemy() {
-        let enemy = this.matter.add.image(this.cameras.main.width - 50, this.cameras.main.height - 150, 'baby');
+        if (this.currentEnemies >= this.maxEnemies) {
+            this.checkGameResult();
+            return;
+        }
+
+        this.currentEnemies++;
+        let enemy = this.matter.add.image(800, 450, 'baby');
         enemy.setRectangle(50, 50);
         enemy.setStatic(false);
+        this.enemies.push(enemy);
+
+        // Move enemy from right to left towards slingshot
+        let moveInterval = this.time.addEvent({
+            delay: 100,
+            loop: true,
+            callback: () => {
+                if (this.enemies.includes(enemy)) {
+                    enemy.setVelocity(-1, 0); // Move straight from right to left
+                }
+            }
+        });
+
+        // If enemy reaches slingshot, count as missed
+        this.time.delayedCall(6000, () => {
+            if (this.enemies.includes(enemy)) {
+                enemy.destroy();
+                this.enemies.shift();
+                this.missedEnemies++;
+                this.checkGameResult();
+            }
+        }, [], this);
+    }
+
+    checkGameResult() {
+        if (this.missedEnemies >= 3) {
+            alert("Game Over! You failed.");
+            this.scene.restart();
+        } else if (this.enemiesDefeated >= 3) {
+            let stars = this.getStarCount();
+            alert(`You win! Stars earned: ${stars}`);
+            this.scene.start('Level2Scene');
+        }
+    }
+
+    getStarCount() {
+        if (this.enemiesDefeated === 3) return 1;
+        if (this.enemiesDefeated === 4) return 2;
+        if (this.enemiesDefeated === 5) return 3;
+        return 0;
     }
 }
 
+// Game configuration
 const config = {
     type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: 800,
+    height: 600,
     physics: {
         default: 'matter',
         matter: {
-            gravity: { y: 1 },
+            gravity: { y: 1 }, // Normal gravity for realistic physics
             debug: false
         }
     },
     scene: [MainScene]
 };
 
+// Start the game
 const game = new Phaser.Game(config);
