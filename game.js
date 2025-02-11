@@ -1,10 +1,8 @@
 class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
-        this.maxPoops = 6;
         this.poopsUsed = 0;
         this.currentEnemies = 0;
-        this.maxEnemies = 5;
         this.enemiesDefeated = 0;
         this.missedEnemies = 0;
     }
@@ -47,8 +45,6 @@ class MainScene extends Phaser.Scene {
     }
 
     spawnPoop() {
-        if (this.poopsUsed >= this.maxPoops) return;
-        this.poopsUsed++;
         this.poop = this.matter.add.image(150, 450, 'poop');
         this.poop.setCircle(20);
         this.poop.setStatic(true);
@@ -60,16 +56,10 @@ class MainScene extends Phaser.Scene {
         if (!this.poop) return;
         this.poop.setStatic(false);
         this.poop.setVelocity(10, -10);
-        this.time.delayedCall(1500, () => this.spawnPoop(), [], this);
+        this.time.delayedCall(500, () => this.spawnPoop(), [], this);
     }
 
     spawnEnemy() {
-        if (this.currentEnemies >= this.maxEnemies) {
-            this.checkGameResult();
-            return;
-        }
-
-        this.currentEnemies++;
         let enemy = this.matter.add.image(800, 450, 'baby');
         enemy.setRectangle(50, 50);
         enemy.setStatic(false);
@@ -90,27 +80,9 @@ class MainScene extends Phaser.Scene {
                 enemy.destroy();
                 this.enemies.shift();
                 this.missedEnemies++;
-                this.checkGameResult();
             }
+            this.spawnEnemy();
         }, [], this);
-    }
-
-    checkGameResult() {
-        if (this.missedEnemies >= 3) {
-            alert("Game Over! You failed.");
-            this.scene.restart();
-        } else if (this.enemiesDefeated >= 3) {
-            let stars = this.getStarCount();
-            alert(`You win! Stars earned: ${stars}`);
-            this.scene.start('Level2Scene');
-        }
-    }
-
-    getStarCount() {
-        if (this.enemiesDefeated === 3) return 1;
-        if (this.enemiesDefeated === 4) return 2;
-        if (this.enemiesDefeated === 5) return 3;
-        return 0;
     }
 }
 
