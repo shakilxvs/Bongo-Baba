@@ -1,27 +1,24 @@
 class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
-        this.maxPoops = 6;
-        this.poopsUsed = 0;
-        this.currentEnemies = 0;
-        this.maxEnemies = 5;
-        this.enemiesDefeated = 0;
-        this.missedEnemies = 0;
     }
 
     preload() {
-        this.load.image('background', 'assets/background.png');
-        this.load.image('poop', 'assets/poop.png');
-        this.load.image('baby', 'assets/baby_enemy.png');
-        this.load.image('slingshot', 'assets/slingshot.png');
+        // Load images from external URLs
+        this.load.image('background', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/background.png?v=1739296210');
+        this.load.image('poop', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/poop.png?v=1739296208');
+        this.load.image('baby', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/baby_enemy.png?v=1739296208');
+        this.load.image('slingshot', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/slingshot.png?v=1739296208');
     }
 
     create() {
         this.updateCanvasSize();
 
+        // Add background and make it fullscreen
         this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background')
             .setDisplaySize(this.cameras.main.width, this.cameras.main.height);
 
+        // Add slingshot and align properly
         this.slingshot = this.add.image(150, this.cameras.main.height - 150, 'slingshot').setDepth(1);
 
         this.poop = null;
@@ -43,9 +40,6 @@ class MainScene extends Phaser.Scene {
                     onComplete: () => {
                         poop.destroy();
                         enemy.destroy();
-                        this.enemiesDefeated++;
-                        this.spawnPoop();
-                        this.spawnEnemy();
                     }
                 });
             }
@@ -59,9 +53,6 @@ class MainScene extends Phaser.Scene {
     }
 
     spawnPoop() {
-        if (this.poopsUsed >= this.maxPoops) return;
-        
-        this.poopsUsed++;
         this.poop = this.matter.add.image(150, this.cameras.main.height - 150, 'poop');
         this.poop.setCircle(20);
         this.poop.setStatic(true);
@@ -73,58 +64,12 @@ class MainScene extends Phaser.Scene {
     launchPoop() {
         this.poop.setStatic(false);
         this.poop.setVelocity(10, -10);
-
-        this.time.delayedCall(1500, () => this.spawnPoop(), [], this);
     }
 
     spawnEnemy() {
-        if (this.currentEnemies >= this.maxEnemies) {
-            this.checkGameResult();
-            return;
-        }
-
-        this.currentEnemies++;
         let enemy = this.matter.add.image(this.cameras.main.width - 50, this.cameras.main.height - 150, 'baby');
         enemy.setRectangle(50, 50);
         enemy.setStatic(false);
-        this.enemies.push(enemy);
-
-        this.time.addEvent({
-            delay: 100,
-            loop: true,
-            callback: () => {
-                if (this.enemies.includes(enemy)) {
-                    enemy.setVelocity(-1, 0);
-                }
-            }
-        });
-
-        this.time.delayedCall(6000, () => {
-            if (this.enemies.includes(enemy)) {
-                enemy.destroy();
-                this.enemies.shift();
-                this.missedEnemies++;
-                this.checkGameResult();
-            }
-        }, [], this);
-    }
-
-    checkGameResult() {
-        if (this.missedEnemies >= 3) {
-            alert("Game Over! You failed.");
-            this.scene.restart();
-        } else if (this.enemiesDefeated >= 3) {
-            let stars = this.getStarCount();
-            alert(`You win! Stars earned: ${stars}`);
-            this.scene.start('Level2Scene');
-        }
-    }
-
-    getStarCount() {
-        if (this.enemiesDefeated === 3) return 1;
-        if (this.enemiesDefeated === 4) return 2;
-        if (this.enemiesDefeated === 5) return 3;
-        return 0;
     }
 }
 
