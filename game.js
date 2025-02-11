@@ -10,7 +10,7 @@ class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', 'background.png');
+        this.load.image('background', 'assets/background.png');
         this.load.image('poop', 'assets/poop.png');
         this.load.image('baby', 'assets/baby_enemy.png');
         this.load.image('slingshot', 'assets/slingshot.png');
