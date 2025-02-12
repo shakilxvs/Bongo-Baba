@@ -14,6 +14,9 @@ class MainScene extends Phaser.Scene {
         this.load.image('poop', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/poop.png');
         this.load.image('baby', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/baby_enemy.png');
         this.load.image('slingshot', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/slingshot.png');
+
+        // **Load background music**
+        this.load.audio('backgroundMusic', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/35345345.mp3?v=1739387927');
     }
 
     create() {
@@ -30,6 +33,10 @@ class MainScene extends Phaser.Scene {
         this.spawnPoop();
         this.spawnEnemy();
 
+        // **Play background music**
+        this.backgroundMusic = this.sound.add('backgroundMusic', { loop: true, volume: 0.5 });
+        this.backgroundMusic.play();
+
         // Collision handling
         this.matter.world.on('collisionstart', (event) => {
             event.pairs.forEach((pair) => {
@@ -41,8 +48,10 @@ class MainScene extends Phaser.Scene {
 
                 if (!gameObjectA || !gameObjectB) return;
 
-                if ((gameObjectA.texture.key === 'poop' && gameObjectB.texture.key === 'baby') ||
-                    (gameObjectA.texture.key === 'baby' && gameObjectB.texture.key === 'poop')) {
+                if (
+                    (gameObjectA.texture.key === 'poop' && gameObjectB.texture.key === 'baby') ||
+                    (gameObjectA.texture.key === 'baby' && gameObjectB.texture.key === 'poop')
+                ) {
                     this.handleCollision(gameObjectA, gameObjectB);
                 }
             });
@@ -118,8 +127,12 @@ class MainScene extends Phaser.Scene {
     updateSlingshotBand(poopX, poopY) {
         this.slingshotBand.clear();
         this.slingshotBand.lineStyle(4, 0x8B4513); // Brown color for the band
-        this.slingshotBand.strokeLineShape(new Phaser.Geom.Line(this.slingshot.x - 10, this.slingshot.y - 30, poopX, poopY));
-        this.slingshotBand.strokeLineShape(new Phaser.Geom.Line(this.slingshot.x + 10, this.slingshot.y - 30, poopX, poopY));
+        this.slingshotBand.strokeLineShape(
+            new Phaser.Geom.Line(this.slingshot.x - 10, this.slingshot.y - 30, poopX, poopY)
+        );
+        this.slingshotBand.strokeLineShape(
+            new Phaser.Geom.Line(this.slingshot.x + 10, this.slingshot.y - 30, poopX, poopY)
+        );
     }
 
     spawnEnemy() {
@@ -197,8 +210,10 @@ class MainScene extends Phaser.Scene {
 
                 // Check if poop is out of bounds
                 if (
-                    this.poop.x < -50 || this.poop.x > 850 ||
-                    this.poop.y < -50 || this.poop.y > 650
+                    this.poop.x < -50 ||
+                    this.poop.x > 850 ||
+                    this.poop.y < -50 ||
+                    this.poop.y > 650
                 ) {
                     this.poop.destroy();
                     this.poop = null;
