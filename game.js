@@ -10,7 +10,7 @@ class MainScene extends Phaser.Scene {
     preload() {
         this.load.image('background', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/background.png?v=1739296210');
         this.load.image('poop', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/poop.png?v=1739296208');
-        this.load.image('baby', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/baby_enemy.png?v=1739296208');
+        this.load.image('baby', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/baby_enemy.png?v=1739381731');
         this.load.image('slingshot', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/slingshot.png?v=1739296208');
     }
 
