@@ -10,15 +10,15 @@ class MainScene extends Phaser.Scene {
 
     preload() {
         // Load game assets
-        this.load.image('background', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/background.png?v=1739296210');
-        this.load.image('poop', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/poop.png?v=1739296208');
-        this.load.image('baby', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/baby_enemy.png?v=1739381731');
-        this.load.image('slingshot', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/slingshot.png?v=1739296208');
+        this.load.image('background', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/background.png');
+        this.load.image('poop', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/poop.png');
+        this.load.image('baby', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/baby_enemy.png');
+        this.load.image('slingshot', 'https://cdn.shopify.com/s/files/1/0919/6814/3645/files/slingshot.png');
     }
 
     create() {
-        // Add background and slingshot images
-        this.add.image(400, 300, 'background');
+        // Add background image
+        this.add.image(400, 300, 'background').setDisplaySize(800, 600);
 
         // Add slingshot
         this.slingshot = this.add.image(150, 450, 'slingshot').setDepth(1);
@@ -54,8 +54,8 @@ class MainScene extends Phaser.Scene {
         if (this.poop) return;
 
         // Create poop
-        this.poop = this.matter.add.image(150, 450, 'poop');
-        this.poop.setCircle(20);
+        this.poop = this.matter.add.image(this.slingshot.x, this.slingshot.y - 20, 'poop');
+        this.poop.setCircle();
         this.poop.setStatic(true);
         this.poop.setInteractive();
         this.poop.setDepth(2);
@@ -100,7 +100,7 @@ class MainScene extends Phaser.Scene {
         this.poop.clearTint();
 
         // Calculate velocity based on drag distance
-        const launchSpeed = 0.2;
+        const launchSpeed = 0.3; // Adjusted launch speed
         const velocityX = (this.slingshot.x - this.poop.x) * launchSpeed;
         const velocityY = (this.slingshot.y - this.poop.y) * launchSpeed;
 
@@ -127,8 +127,14 @@ class MainScene extends Phaser.Scene {
         if (this.enemy) return;
 
         // Create enemy
-        this.enemy = this.matter.add.image(800, 450, 'baby');
-        this.enemy.setRectangle(50, 50);
+        this.enemy = this.matter.add.image(750, 450, 'baby');
+        this.enemy.setRectangle(); // Use the image's dimensions
+
+        // Set enemy origin to center
+        this.enemy.setOrigin(0.5, 0.5);
+
+        // Scale down the enemy to 70%
+        this.enemy.setScale(0.7);
 
         // Disable gravity on enemy
         this.enemy.setIgnoreGravity(true);
@@ -154,17 +160,23 @@ class MainScene extends Phaser.Scene {
 
         // Enemy defeat animation
         enemy.setTint(0xff0000);
-        enemy.setAngularVelocity(0.5);
-        enemy.setVelocity(5, -5);
+        enemy.setAngularVelocity(0.1); // Slower spin
+
+        enemy.setVelocity(2, -2);
         enemy.setCollidesWith([]); // Disable further collisions
         this.enemiesDefeated++;
 
-        // Destroy enemy after a delay
-        this.time.delayedCall(500, () => {
-            if (enemy) {
-                enemy.destroy();
-                this.enemy = null; // Allow new enemy to spawn
-                this.spawnEnemy();
+        // Add fade-out effect
+        this.tweens.add({
+            targets: enemy,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => {
+                if (enemy) {
+                    enemy.destroy();
+                    this.enemy = null; // Allow new enemy to spawn
+                    this.spawnEnemy();
+                }
             }
         });
 
@@ -185,8 +197,8 @@ class MainScene extends Phaser.Scene {
 
                 // Check if poop is out of bounds
                 if (
-                    this.poop.x < 0 || this.poop.x > this.game.config.width ||
-                    this.poop.y < 0 || this.poop.y > this.game.config.height
+                    this.poop.x < -50 || this.poop.x > 850 ||
+                    this.poop.y < -50 || this.poop.y > 650
                 ) {
                     this.poop.destroy();
                     this.poop = null;
@@ -203,16 +215,22 @@ class MainScene extends Phaser.Scene {
         });
     }
 }
+
 const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    parent: 'game-container',
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
     physics: {
         default: 'matter',
         matter: {
             gravity: { y: 1 }, // Gravity for the poop
             debug: false,
-            setBounds: { x: 0, y: 0, width: 800, height: 600 }
+            setBounds: true
         }
     },
     scene: [MainScene]
